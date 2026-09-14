@@ -21,52 +21,7 @@ export function useDashboardData() {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        // Cek jika Supabase belum dikonfigurasi (menggunakan mock data sementara)
-        if (!import.meta.env.VITE_SUPABASE_URL) {
-          // Simulasi delay jaringan
-          await new Promise(res => setTimeout(res, 500));
-          
-          setSchedules([
-            {
-              id: '1',
-              title: 'Pemrograman Web Lanjut',
-              type: 'Kuliah',
-              start_time: new Date().setHours(8, 0, 0, 0),
-              end_time: new Date().setHours(10, 30, 0, 0),
-              location: 'Lab Komputer 1'
-            },
-            {
-              id: '2',
-              title: 'Rapat Magang Tim B',
-              type: 'Magang',
-              start_time: new Date().setHours(13, 0, 0, 0),
-              end_time: new Date().setHours(14, 0, 0, 0),
-              location: 'Google Meet'
-            }
-          ]);
-          setTasks([
-            {
-              id: 't1',
-              title: 'Selesaikan Desain UI Figma',
-              course: 'Desain Antarmuka',
-              due_date: new Date(new Date().getTime() + 4 * 60 * 60 * 1000), // 4 jam dari sekarang
-              is_completed: false,
-              priority: 'High'
-            },
-            {
-              id: 't2',
-              title: 'Kumpulkan Laporan Magang',
-              course: 'Magang',
-              due_date: new Date(new Date().getTime() + 20 * 60 * 60 * 1000), // 20 jam dari sekarang
-              is_completed: false,
-              priority: 'Medium'
-            }
-          ]);
-          setLoading(false);
-          return;
-        }
-
-        // 1. Fetch Today's Schedules (Supabase Asli)
+        // 1. Fetch Today's Schedules
         const { data: scheduleData, error: scheduleError } = await supabase
           .from('schedules')
           .select('*')

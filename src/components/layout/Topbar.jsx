@@ -90,7 +90,7 @@ export default function Topbar() {
             />
           </button>
           <span className={`font-label-sm text-label-sm transition-colors ${isPartnerSpace ? 'text-secondary font-bold' : 'text-on-surface-variant'}`}>
-            Mei Space
+            Mey Space
           </span>
         </div>
 

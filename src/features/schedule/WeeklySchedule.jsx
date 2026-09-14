@@ -1,34 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSpace } from '../../context/SpaceContext';
-
-const INITIAL_SCHEDULES = {
-  Monday: [
-    { id: 's1', startTime: '08:00', endTime: '10:00', type: 'Teori', title: 'Advanced Data Structures', code: 'CS-301', description: 'Algorithm Analysis & Optimization', location: 'Room 402 - Eng Bldg', lecturer: 'Dr. A. Turing', color: 'secondary' },
-    { id: 's2', startTime: '10:30', endTime: '13:30', type: 'Praktik', title: 'Database Systems Lab', code: 'CS-305L', description: 'Practical SQL & NoSQL Implementation', location: 'Lab A - Comp Center', lecturer: 'Prof. E. Codd', color: 'amber' },
-    { id: 'break', type: 'break', startTime: '13:30', endTime: '14:30', label: '13:30 - 14:30 • Lunch Break' },
-    { id: 's3', startTime: '14:30', endTime: '16:00', type: 'Teori', title: 'Human-Computer Interaction', code: 'UX-201', description: 'Design Systems & Usability', location: 'Auditorium B', lecturer: 'Dr. D. Norman', color: 'secondary' },
-  ],
-  Tuesday: [
-    { id: 's4', startTime: '09:00', endTime: '11:00', type: 'Teori', title: 'Operating Systems', code: 'CS-310', description: 'Process Management & Scheduling', location: 'Room 201 - Main Bldg', lecturer: 'Prof. L. Torvalds', color: 'secondary' },
-  ],
-  Wednesday: [
-    { id: 's5', startTime: '08:00', endTime: '10:00', type: 'Praktik', title: 'Web Development Lab', code: 'CS-320L', description: 'Full-Stack JavaScript', location: 'Lab B - Comp Center', lecturer: 'Dr. B. Eich', color: 'amber' },
-  ],
-  Thursday: [],
-  Friday: [
-    { id: 's6', startTime: '10:00', endTime: '12:00', type: 'Teori', title: 'Artificial Intelligence', code: 'CS-401', description: 'Machine Learning Fundamentals', location: 'Room 305 - Tech Wing', lecturer: 'Dr. A. Ng', color: 'secondary' },
-  ],
-};
+import { supabase } from '../../lib/supabase';
+import { format } from 'date-fns';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export default function WeeklySchedule() {
-  const { isPartnerSpace } = useSpace();
+  const { isPartnerSpace, activeUserId } = useSpace();
   const [activeDay, setActiveDay] = useState('Monday');
   const [filter, setFilter] = useState('all');
   
   // State for Schedules
-  const [schedules, setSchedules] = useState(INITIAL_SCHEDULES);
+  const [schedules, setSchedules] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   // State for Modal
   const [showModal, setShowModal] = useState(false);
@@ -39,6 +23,42 @@ export default function WeeklySchedule() {
     title: '', code: '', description: '', startTime: '08:00', endTime: '10:00', 
     type: 'Teori', location: '', lecturer: ''
   });
+
+  const fetchSchedules = async () => {
+    if (!activeUserId) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('schedules')
+        .select('*')
+        .eq('user_id', activeUserId)
+        .order('start_time', { ascending: true });
+        
+      if (error) throw error;
+      setSchedules(data || []);
+    } catch (error) {
+      console.error('Error fetching schedules:', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSchedules();
+  }, [activeUserId]);
+
+  const getNextDateForDay = (dayName, timeString) => {
+    const dayMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
+    const targetDay = dayMap[dayName];
+    const today = new Date();
+    const currentDay = today.getDay();
+    const distance = targetDay - currentDay;
+    const targetDate = new Date(today);
+    targetDate.setDate(today.getDate() + distance);
+    const [hours, minutes] = timeString.split(':');
+    targetDate.setHours(parseInt(hours, 10), parseInt(minutes, 10), 0, 0);
+    return targetDate;
+  };
 
   const handleOpenAdd = () => {
     setEditingItem(null);
@@ -52,46 +72,78 @@ export default function WeeklySchedule() {
   const handleOpenEdit = (item) => {
     setEditingItem(item);
     setFormData({
-      title: item.title, code: item.code, description: item.description, 
-      startTime: item.startTime, endTime: item.endTime, type: item.type, 
-      location: item.location, lecturer: item.lecturer
+      title: item.title, code: item.code || '', description: item.description || '', 
+      startTime: item.startTime, 
+      endTime: item.endTime, 
+      type: item.type, location: item.location || '', lecturer: item.lecturer || ''
     });
     setShowModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (confirm('Yakin ingin menghapus kelas ini?')) {
-      setSchedules(prev => {
-        const newSchedules = { ...prev };
-        newSchedules[activeDay] = newSchedules[activeDay].filter(item => item.id !== id);
-        return newSchedules;
-      });
+      try {
+        const { error } = await supabase.from('schedules').delete().eq('id', id);
+        if (error) throw error;
+        setSchedules(prev => prev.filter(item => item.id !== id));
+      } catch (err) {
+        console.error('Error deleting schedule:', err.message);
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const newItem = {
-      ...formData,
-      id: editingItem ? editingItem.id : `s_${Date.now()}`,
-      color: formData.type === 'Praktik' ? 'amber' : 'secondary'
+    const start_time = getNextDateForDay(activeDay, formData.startTime);
+    const end_time = getNextDateForDay(activeDay, formData.endTime);
+    const color = formData.type === 'Praktik' ? 'amber' : 'secondary';
+    
+    const payload = {
+      user_id: activeUserId,
+      title: formData.title,
+      code: formData.code,
+      description: formData.description,
+      type: formData.type,
+      location: formData.location,
+      lecturer: formData.lecturer,
+      start_time: start_time.toISOString(),
+      end_time: end_time.toISOString(),
+      color
     };
 
-    setSchedules(prev => {
-      const newSchedules = { ...prev };
+    try {
       if (editingItem) {
-        newSchedules[activeDay] = newSchedules[activeDay].map(item => item.id === editingItem.id ? newItem : item);
+        const { error } = await supabase.from('schedules').update(payload).eq('id', editingItem.id);
+        if (error) throw error;
       } else {
-        newSchedules[activeDay] = [...newSchedules[activeDay], newItem].sort((a, b) => a.startTime.localeCompare(b.startTime));
+        const { error } = await supabase.from('schedules').insert([payload]);
+        if (error) throw error;
       }
-      return newSchedules;
-    });
-
-    setShowModal(false);
+      fetchSchedules(); // Refresh data from server
+      setShowModal(false);
+    } catch (err) {
+      console.error('Error saving schedule:', err.message);
+    }
   };
 
-  const daySchedules = schedules[activeDay] || [];
+  const groupedSchedules = {
+    Monday: [], Tuesday: [], Wednesday: [], Thursday: [], Friday: []
+  };
+
+  schedules.forEach(s => {
+    const d = new Date(s.start_time);
+    const dayName = format(d, 'EEEE'); // e.g., 'Monday'
+    if (groupedSchedules[dayName]) {
+      groupedSchedules[dayName].push({
+        ...s,
+        startTime: format(d, 'HH:mm'),
+        endTime: format(new Date(s.end_time), 'HH:mm')
+      });
+    }
+  });
+
+  const daySchedules = groupedSchedules[activeDay] || [];
   const filteredSchedules = daySchedules.filter((s) => {
     if (s.type === 'break') return true;
     if (filter === 'all') return true;
@@ -131,7 +183,6 @@ export default function WeeklySchedule() {
               </button>
             </div>
             
-            {!isPartnerSpace && (
               <button 
                 onClick={handleOpenAdd}
                 className="px-md py-2 bg-secondary text-on-secondary rounded-lg font-label-md text-label-md flex items-center gap-xs shadow-sm hover:bg-secondary/90 transition-colors ml-auto sm:ml-4"
@@ -139,7 +190,6 @@ export default function WeeklySchedule() {
                 <span className="material-symbols-outlined text-[18px]">add</span>
                 Add Class
               </button>
-            )}
           </div>
         </div>
 
@@ -165,22 +215,17 @@ export default function WeeklySchedule() {
           {/* Vertical Timeline Line */}
           <div className="absolute left-3 top-4 bottom-4 w-px bg-outline-variant hidden md:block"></div>
 
-          {filteredSchedules.length === 0 ? (
+          {loading ? (
+            <div className="p-lg rounded-xl border border-dashed border-outline-variant bg-surface-container-low flex flex-col justify-center items-center py-16 text-center">
+              <p className="font-body-lg text-body-lg text-on-surface-variant animate-pulse">Memuat jadwal...</p>
+            </div>
+          ) : filteredSchedules.length === 0 ? (
             <div className="p-lg rounded-xl border border-dashed border-outline-variant bg-surface-container-low flex flex-col justify-center items-center py-16 text-center">
               <span className="material-symbols-outlined text-[48px] text-outline-variant mb-4">event_busy</span>
               <p className="font-body-lg text-body-lg text-on-surface-variant">No classes on {activeDay}.</p>
             </div>
           ) : (
             filteredSchedules.map((item) => {
-              if (item.type === 'break') {
-                return (
-                  <div key={item.id} className="p-md rounded-xl border border-dashed border-outline-variant bg-surface-container-low flex justify-center items-center relative opacity-70">
-                    <div className="absolute left-[-24px] top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-outline-variant hidden md:block"></div>
-                    <span className="font-label-md text-label-md text-on-surface-variant">{item.label}</span>
-                  </div>
-                );
-              }
-
               const nodeColor = item.color === 'amber' ? 'bg-amber-500' : 'bg-secondary';
               const badgeBg = item.type === 'Praktik' ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700';
               const locationIcon = item.type === 'Praktik' ? 'computer' : 'location_on';
@@ -200,7 +245,7 @@ export default function WeeklySchedule() {
                       <span className={`px-2 py-1 rounded font-label-sm text-label-sm uppercase tracking-wider ${badgeBg}`}>{item.type}</span>
                       <h4 className="font-headline-sm text-headline-sm text-on-surface">{item.title}</h4>
                     </div>
-                    <p className="font-body-md text-body-md text-on-surface-variant line-clamp-1">{item.code} • {item.description}</p>
+                    <p className="font-body-md text-body-md text-on-surface-variant line-clamp-1">{item.code} {item.code && '•'} {item.description}</p>
                   </div>
                   {/* Meta Data & Actions */}
                   <div className="flex flex-row md:flex-col gap-md md:gap-sm shrink-0 items-start md:items-end w-full md:w-auto mt-4 md:mt-0">
@@ -215,7 +260,6 @@ export default function WeeklySchedule() {
                       </div>
                     </div>
                     
-                    {!isPartnerSpace && (
                       <div className="flex gap-2 ml-auto md:mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => handleOpenEdit(item)}
@@ -232,7 +276,6 @@ export default function WeeklySchedule() {
                           <span className="material-symbols-outlined text-[18px]">delete</span>
                         </button>
                       </div>
-                    )}
                   </div>
                 </div>
               );
@@ -242,8 +285,8 @@ export default function WeeklySchedule() {
 
         {/* Modal for Add/Edit */}
         {showModal && (
-          <div className="fixed inset-0 bg-primary/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-surface rounded-xl shadow-lg w-full max-w-lg border border-outline-variant overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="bg-white rounded-xl shadow-lg w-[95vw] md:w-[500px] max-w-[500px] border border-outline-variant overflow-hidden flex flex-col max-h-[90vh]">
               <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
                 <h3 className="font-headline-sm text-headline-sm text-primary">
                   {editingItem ? 'Edit Class Schedule' : 'Add New Class'} - {activeDay}
