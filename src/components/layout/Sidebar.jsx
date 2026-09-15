@@ -43,14 +43,6 @@ export default function Sidebar({ activePage, onNavigate }) {
             </button>
           );
         })}
-
-        {/* Settings at bottom */}
-        <button
-          className="flex items-center gap-sm px-sm py-2 rounded-lg text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors duration-150 mt-auto w-full text-left"
-        >
-          <span className="material-symbols-outlined">settings</span>
-          <span className="font-label-md text-label-md">Settings</span>
-        </button>
       </nav>
 
       {/* User Profile */}
