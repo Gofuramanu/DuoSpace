@@ -41,7 +41,6 @@ export function useDashboardData() {
           .select('*')
           .eq('user_id', activeUserId)
           .eq('is_completed', false)
-          .lte('due_date', next24h.toISOString())
           .order('due_date', { ascending: true });
 
         if (taskError) throw taskError;

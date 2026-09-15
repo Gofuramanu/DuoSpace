@@ -11,13 +11,13 @@ function App() {
   function renderPage() {
     switch (activePage) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActivePage} />;
       case 'schedule':
         return <WeeklySchedule />;
       case 'tasks':
         return <TaskManager />;
       default:
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActivePage} />;
     }
   }
 

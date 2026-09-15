@@ -11,7 +11,7 @@ function getTimeLeft(dueDate) {
   return `${hours}h left`;
 }
 
-export default function Dashboard() {
+export default function Dashboard({ onNavigate = () => {} }) {
   const { isPartnerSpace } = useSpace();
   const { schedules, tasks, loading, error } = useDashboardData();
 
@@ -31,6 +31,12 @@ export default function Dashboard() {
     );
   }
 
+  const now = new Date();
+  const urgentTasks = tasks.filter(t => {
+    const diffHours = (new Date(t.due_date) - now) / (1000 * 60 * 60);
+    return diffHours > 0 && diffHours <= 24;
+  });
+
   const totalActiveTasks = tasks.length;
 
   return (
@@ -40,7 +46,7 @@ export default function Dashboard() {
         {/* Stat Card 1 */}
         <div className="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant shadow-[0_4px_6px_-1px_rgba(15,23,42,0.05)] flex items-center justify-between">
           <div>
-            <p className="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Total Active Tasks</p>
+            <p className="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Total Pending Tasks</p>
             <p className="font-headline-lg text-headline-lg text-primary">{totalActiveTasks}</p>
           </div>
           <div className="w-12 h-12 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
@@ -60,11 +66,11 @@ export default function Dashboard() {
         {/* Stat Card 3 */}
         <div className="bg-surface-container-lowest rounded-xl p-lg border border-outline-variant shadow-[0_4px_6px_-1px_rgba(15,23,42,0.05)] flex items-center justify-between">
           <div>
-            <p className="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Overall Attendance</p>
-            <p className="font-headline-lg text-headline-lg text-primary">94%</p>
+            <p className="font-label-sm text-label-sm text-on-surface-variant mb-1 uppercase tracking-wider">Urgent Tasks (24h)</p>
+            <p className="font-headline-lg text-headline-lg text-primary">{urgentTasks.length}</p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed">
-            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>how_to_reg</span>
+          <div className="w-12 h-12 rounded-full bg-error-container/20 flex items-center justify-center text-on-error-container">
+            <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>assignment_late</span>
           </div>
         </div>
       </section>
@@ -75,7 +81,7 @@ export default function Dashboard() {
         <div className="lg:col-span-8 flex flex-col gap-md">
           <div className="flex items-center justify-between mb-sm">
             <h3 className="font-headline-sm text-headline-sm text-primary">Today's Classes</h3>
-            <button className="text-secondary font-label-md text-label-md hover:bg-secondary/10 px-sm py-1 rounded transition-colors">View Schedule</button>
+            <button onClick={() => onNavigate('schedule')} className="text-secondary font-label-md text-label-md hover:bg-secondary/10 px-sm py-1 rounded transition-colors">View Schedule</button>
           </div>
 
           {schedules.length === 0 ? (
@@ -133,17 +139,17 @@ export default function Dashboard() {
         <div className="lg:col-span-4 flex flex-col gap-md">
           <div className="flex items-center justify-between mb-sm">
             <h3 className="font-headline-sm text-headline-sm text-primary">Due in 24h</h3>
-            <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+            {urgentTasks.length > 0 && <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>}
           </div>
 
-          {tasks.length === 0 ? (
+          {urgentTasks.length === 0 ? (
             <div className="bg-surface-container-lowest rounded-xl p-lg border border-dashed border-outline-variant flex flex-col items-center justify-center py-12 text-center">
               <p className="font-body-md text-body-md text-on-surface-variant">Tidak ada tugas yang mendesak.</p>
             </div>
           ) : (
             <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-[0_4px_6px_-1px_rgba(15,23,42,0.05)] overflow-hidden">
               <ul className="divide-y divide-outline-variant">
-                {tasks.map((task) => (
+                {urgentTasks.map((task) => (
                   <li key={task.id} className="p-md hover:bg-surface-container-low transition-colors group cursor-pointer">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-body-lg text-body-lg text-primary font-medium group-hover:text-secondary transition-colors">
@@ -160,7 +166,7 @@ export default function Dashboard() {
                 ))}
               </ul>
               <div className="p-sm bg-surface-container border-t border-outline-variant text-center">
-                <button className="text-secondary font-label-md text-label-md hover:underline">View All Tasks</button>
+                <button onClick={() => onNavigate('tasks')} className="text-secondary font-label-md text-label-md hover:underline">View All Tasks</button>
               </div>
             </div>
           )}
