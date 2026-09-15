@@ -135,6 +135,56 @@
   .material-symbols-outlined.fill {
     font-variation-settings: 'FILL' 1;
   }
+
+  .dark {
+    --color-surface-container-highest: #333438;
+    --color-on-secondary-fixed: #cce0ff;
+    --color-primary-container: #00337a;
+    --color-error-container: #93000a;
+    --color-secondary-container: #004694;
+    --color-on-error-container: #ffdad6;
+    --color-surface: #111318;
+    --color-tertiary-fixed-dim: #c4c7c9;
+    --color-on-tertiary: #1b1b1d;
+    --color-primary-fixed: #a8c8ff;
+    --color-primary: #a8c8ff;
+    --color-on-secondary-fixed-variant: #88b0ff;
+    --color-on-tertiary-fixed: #e2e2e5;
+    --color-on-background: #e2e2e5;
+    --color-on-primary-fixed-variant: #78a9ff;
+    --color-surface-bright: #3b3d41;
+    --color-tertiary: #ffffff;
+    --color-outline: #8e9099;
+    --color-surface-variant: #44474e;
+    --color-surface-dim: #111318;
+    --color-on-primary-fixed: #001f54;
+    --color-on-primary: #003075;
+    --color-on-surface-variant: #c4c6d0;
+    --color-primary-fixed-dim: #8baeff;
+    --color-inverse-surface: #e2e2e5;
+    --color-surface-tint: #a8c8ff;
+    --color-outline-variant: #44474e;
+    --color-surface-container: #1d2024;
+    --color-secondary-fixed: #d6e3ff;
+    --color-tertiary-container: #2b2e30;
+    --color-on-secondary-container: #d6e3ff;
+    --color-background: #111318;
+    --color-on-tertiary-fixed-variant: #c4c7c9;
+    --color-on-surface: #e2e2e5;
+    --color-on-error: #690005;
+    --color-secondary-fixed-dim: #b0c9ff;
+    --color-surface-container-lowest: #0c0e13;
+    --color-error: #ffb4ab;
+    --color-secondary: #aac7ff;
+    --color-inverse-on-surface: #2e3135;
+    --color-on-tertiary-container: #c4c7c9;
+    --color-inverse-primary: #335ca8;
+    --color-on-primary-container: #d7e2ff;
+    --color-tertiary-fixed: #e2e2e5;
+    --color-surface-container-low: #191c20;
+    --color-on-secondary: #002f68;
+    --color-surface-container-high: #282a2f;
+  }
 }
 
 @layer components {
@@ -143,5 +193,14 @@
     backdrop-filter: blur(10px);
     border: 1px solid var(--color-outline-variant);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
   }
 }

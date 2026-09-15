@@ -1,10 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSpace } from '../../context/SpaceContext';
-
-const MOCK_NOTIFICATIONS = [
-  { id: 1, type: 'class', message: 'Kelas Advanced Data Structures akan dimulai dalam 30 menit.', time: 'Just now' },
-  { id: 2, type: 'task', message: 'Tugas "Implement Red-Black Tree" due besok.', time: '2 hours ago' },
-];
+import { useDashboardData } from '../../hooks/useDashboardData';
 
 const ALL_SEARCHABLE_ITEMS = [
   { id: 'c1', type: 'Class', title: 'Advanced Data Structures', detail: 'CS-301' },
@@ -15,9 +11,13 @@ const ALL_SEARCHABLE_ITEMS = [
 
 export default function Topbar() {
   const { isPartnerSpace, toggleSpace } = useSpace();
+  const { schedules, tasks } = useDashboardData();
   const [dateTime, setDateTime] = useState('');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [popupNotif, setPopupNotif] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -25,17 +25,85 @@ export default function Topbar() {
   const notifRef = useRef(null);
   const searchRef = useRef(null);
 
+  // Theme Initialization
+  useEffect(() => {
+    const isDark = localStorage.getItem('theme') === 'dark' || 
+                   (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+      setIsDarkMode(true);
+    }
+  };
+
+  // Clock Update
   useEffect(() => {
     function updateDateTime() {
       const now = new Date();
-      const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+      const options = { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
       const timeString = now.toLocaleDateString('en-US', options).replace(',', ' •');
       setDateTime(timeString);
     }
     updateDateTime();
-    const interval = setInterval(updateDateTime, 60000);
+    const interval = setInterval(updateDateTime, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Compute Notifications
+  useEffect(() => {
+    const now = new Date();
+    const newNotifications = [];
+
+    // Classes starting in less than 30 mins
+    schedules?.forEach(s => {
+      if (s.type === 'break') return;
+      const startTime = new Date(s.start_time);
+      const diffMins = (startTime - now) / (1000 * 60);
+      if (diffMins > 0 && diffMins <= 30) {
+        newNotifications.push({
+          id: `sch-${s.id}`,
+          type: 'class',
+          message: `Kelas ${s.title} akan dimulai dalam ${Math.ceil(diffMins)} menit.`,
+          time: 'Just now'
+        });
+      }
+    });
+
+    // Tasks due in less than 24h
+    tasks?.forEach(t => {
+      if (!t.is_completed) {
+        const dueDate = new Date(t.due_date);
+        const diffHours = (dueDate - now) / (1000 * 60 * 60);
+        if (diffHours > 0 && diffHours <= 24) {
+          newNotifications.push({
+            id: `tsk-${t.id}`,
+            type: 'task',
+            message: `Tugas "${t.title}" deadline dalam ${Math.ceil(diffHours)} jam.`,
+            time: 'Due soon'
+          });
+        }
+      }
+    });
+
+    // Trigger popup if new notification arrives
+    if (newNotifications.length > notifications.length && newNotifications.length > 0) {
+      setPopupNotif(newNotifications[0]);
+      setTimeout(() => setPopupNotif(null), 5000);
+    }
+
+    setNotifications(newNotifications);
+  }, [schedules, tasks]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -67,8 +135,8 @@ export default function Topbar() {
   return (
     <header className="bg-surface border-b border-outline-variant sticky top-0 z-40 flex justify-between items-center w-full h-16 px-lg">
       <div className="flex items-center gap-md">
-        <h2 className="font-headline-sm text-headline-sm font-bold text-primary">Semester 5 - Fall 2024</h2>
-        <span className="text-on-surface-variant font-label-sm text-label-sm ml-4 hidden sm:inline">
+        <h2 className="font-headline-sm text-headline-sm font-bold text-primary">Semester 5</h2>
+        <span className="text-on-surface-variant font-body-md text-body-md font-semibold ml-4 hidden sm:inline">
           {dateTime}
         </span>
       </div>
@@ -137,7 +205,9 @@ export default function Topbar() {
             onClick={() => setShowNotifications(!showNotifications)}
           >
             <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border border-surface"></span>
+            {notifications.length > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full border border-surface"></span>
+            )}
           </button>
           
           {/* Notifications Dropdown */}
@@ -148,7 +218,7 @@ export default function Topbar() {
                 <span className="text-xs text-secondary cursor-pointer hover:underline">Mark all as read</span>
               </div>
               <ul className="max-h-80 overflow-y-auto">
-                {MOCK_NOTIFICATIONS.map(notif => (
+                {notifications.length > 0 ? notifications.map(notif => (
                   <li key={notif.id} className="p-3 hover:bg-surface-container-low cursor-pointer border-b border-outline-variant/50 last:border-b-0 flex gap-3 items-start">
                     <span className={`material-symbols-outlined text-[20px] mt-0.5 ${notif.type === 'class' ? 'text-emerald-500' : 'text-amber-500'}`}>
                       {notif.type === 'class' ? 'school' : 'assignment'}
@@ -158,7 +228,11 @@ export default function Topbar() {
                       <span className="text-xs text-on-surface-variant">{notif.time}</span>
                     </div>
                   </li>
-                ))}
+                )) : (
+                  <li className="p-4 text-center text-on-surface-variant font-body-md text-body-md">
+                    No new notifications
+                  </li>
+                )}
               </ul>
               <div className="p-2 text-center border-t border-outline-variant bg-surface-container-low hover:bg-surface-container cursor-pointer transition-colors">
                 <span className="text-xs font-bold text-secondary">View All Notifications</span>
@@ -167,10 +241,27 @@ export default function Topbar() {
           )}
         </div>
 
-        <button className="text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-colors">
-          <span className="material-symbols-outlined">help</span>
+        <button 
+          className="text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-colors"
+          onClick={toggleTheme}
+          title="Toggle Dark Mode"
+        >
+          <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
         </button>
       </div>
+
+      {/* Toast Popup */}
+      {popupNotif && (
+        <div className="fixed bottom-4 right-4 bg-surface-container-highest border border-outline-variant p-4 rounded-xl shadow-card z-50 flex gap-3 items-start animate-fade-in">
+          <span className={`material-symbols-outlined text-[24px] ${popupNotif.type === 'class' ? 'text-emerald-500' : 'text-amber-500'}`}>
+            {popupNotif.type === 'class' ? 'school' : 'assignment'}
+          </span>
+          <div>
+            <h4 className="font-headline-sm text-[16px] font-bold text-primary">New Notification</h4>
+            <p className="font-body-md text-body-md text-on-surface-variant">{popupNotif.message}</p>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
