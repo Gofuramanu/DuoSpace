@@ -86,7 +86,13 @@ export default function Dashboard() {
           ) : (
             schedules.map((schedule, index) => {
               const isCompleted = new Date(schedule.end_time) < new Date();
-              const borderColor = schedule.type === 'Magang' ? 'border-l-emerald-500' : 'border-l-secondary';
+              const borderColor = schedule.type === 'Praktik' ? 'border-l-amber-500' : 'border-l-secondary';
+              
+              const badgeBg = schedule.type === 'Praktik'
+                ? 'bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                : schedule.type === 'Teori'
+                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                : 'bg-secondary-fixed text-on-secondary-fixed dark:bg-secondary-container dark:text-on-secondary-container';
 
               return (
                 <div
@@ -95,11 +101,7 @@ export default function Dashboard() {
                 >
                   <div className="flex justify-between items-start mb-md">
                     <div>
-                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide mb-2 ${
-                        schedule.type === 'Magang'
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-secondary-fixed text-on-secondary-fixed'
-                      }`}>
+                      <span className={`inline-block px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide mb-2 ${badgeBg}`}>
                         {schedule.type}
                       </span>
                       <h4 className={`font-headline-md text-headline-md text-primary ${isCompleted ? 'line-through' : ''}`}>
