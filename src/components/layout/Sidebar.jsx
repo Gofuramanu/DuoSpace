@@ -12,7 +12,7 @@ export default function Sidebar({ activePage, onNavigate }) {
   const displayUser = isPartnerSpace ? partnerUser : currentUser;
 
   return (
-    <aside className="bg-surface border-r border-outline-variant h-screen w-64 fixed left-0 top-0 flex flex-col py-lg px-md z-50">
+    <aside className="hidden md:flex bg-surface border-r border-outline-variant h-screen w-64 fixed left-0 top-0 flex-col py-lg px-md z-50">
       {/* Logo */}
       <div className="mb-xl">
         <h1 className="font-headline-md text-headline-md font-bold text-primary">DuoSpace</h1>

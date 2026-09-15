@@ -161,8 +161,8 @@ export default function WeeklySchedule() {
             <h3 className="font-headline-lg text-headline-lg text-on-surface mb-1">Weekly Schedule</h3>
             <p className="font-body-md text-body-md text-on-surface-variant">Manage your classes and practical sessions.</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-sm items-center w-full md:w-auto">
-            <div className="flex gap-sm">
+          <div className="flex flex-col md:flex-row gap-sm items-start md:items-center w-full md:w-auto mt-4 md:mt-0">
+            <div className="flex flex-wrap gap-sm w-full md:w-auto">
               <button
                 onClick={() => setFilter('all')}
                 className={`px-md py-2 rounded-full border border-outline-variant font-label-md text-label-md flex items-center gap-xs transition-colors ${filter === 'all' ? 'bg-surface-container-lowest text-on-surface' : 'bg-surface text-on-surface-variant hover:bg-surface-container'}`}
@@ -194,7 +194,7 @@ export default function WeeklySchedule() {
         </div>
 
         {/* Day Tabs */}
-        <div className="glass-panel rounded-xl mb-lg overflow-hidden flex">
+        <div className="glass-panel rounded-xl mb-lg overflow-x-auto flex whitespace-nowrap scrollbar-hide">
           {DAYS.map((day) => (
             <button
               key={day}

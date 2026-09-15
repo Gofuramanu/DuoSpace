@@ -133,17 +133,17 @@ export default function Topbar() {
   };
 
   return (
-    <header className="bg-surface border-b border-outline-variant sticky top-0 z-40 flex justify-between items-center w-full h-16 px-lg">
-      <div className="flex items-center gap-md">
-        <h2 className="font-headline-sm text-headline-sm font-bold text-primary">Semester 5</h2>
-        <span className="text-on-surface-variant font-body-md text-body-md font-semibold ml-4 hidden sm:inline">
+    <header className="bg-surface border-b border-outline-variant sticky top-0 z-40 flex justify-between items-center w-full h-14 md:h-16 px-4 md:px-lg">
+      <div className="flex flex-col md:flex-row md:items-center md:gap-md">
+        <h2 className="font-headline-sm text-[16px] md:text-headline-sm font-bold text-primary">Semester 5</h2>
+        <span className="text-on-surface-variant text-[11px] md:text-body-md md:font-semibold">
           {dateTime}
         </span>
       </div>
 
-      <div className="flex items-center gap-md">
+      <div className="flex items-center gap-2 md:gap-md ml-auto">
         {/* Space Toggle */}
-        <div className="flex items-center gap-xs bg-surface-container-lowest border border-outline-variant rounded-full px-sm py-1">
+        <div className="flex items-center gap-xs bg-surface-container-lowest border border-outline-variant rounded-full px-sm py-1 scale-90 md:scale-100 origin-right">
           <span className={`font-label-sm text-label-sm transition-colors ${!isPartnerSpace ? 'text-secondary font-bold' : 'text-on-surface-variant'}`}>
             Ghafur Space
           </span>
@@ -252,7 +252,7 @@ export default function Topbar() {
 
       {/* Toast Popup */}
       {popupNotif && (
-        <div className="fixed bottom-4 right-4 bg-surface-container-highest border border-outline-variant p-4 rounded-xl shadow-card z-50 flex gap-3 items-start animate-fade-in">
+        <div className="fixed bottom-20 md:bottom-4 right-4 left-4 md:left-auto bg-surface-container-highest border border-outline-variant p-4 rounded-xl shadow-card z-50 flex gap-3 items-start animate-fade-in">
           <span className={`material-symbols-outlined text-[24px] ${popupNotif.type === 'class' ? 'text-emerald-500' : 'text-amber-500'}`}>
             {popupNotif.type === 'class' ? 'school' : 'assignment'}
           </span>
