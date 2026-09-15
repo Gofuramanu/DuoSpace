@@ -7,7 +7,10 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 export default function WeeklySchedule() {
   const { isPartnerSpace, activeUserId } = useSpace();
-  const [activeDay, setActiveDay] = useState('Monday');
+  const [activeDay, setActiveDay] = useState(() => {
+    const day = format(new Date(), 'EEEE');
+    return DAYS.includes(day) ? day : 'Monday';
+  });
   const [filter, setFilter] = useState('all');
   
   // State for Schedules
@@ -286,8 +289,8 @@ export default function WeeklySchedule() {
         {/* Modal for Add/Edit */}
         {showModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-lg w-[95vw] md:w-[500px] max-w-[500px] border border-outline-variant overflow-hidden flex flex-col max-h-[90vh]">
-              <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-lowest">
+            <div className="bg-surface-container-lowest text-on-surface rounded-xl shadow-lg w-[95vw] md:w-[500px] max-w-[500px] border border-outline-variant overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low">
                 <h3 className="font-headline-sm text-headline-sm text-primary">
                   {editingItem ? 'Edit Class Schedule' : 'Add New Class'} - {activeDay}
                 </h3>
@@ -304,45 +307,45 @@ export default function WeeklySchedule() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">Class Title</label>
-                      <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Data Structures" />
+                      <input required type="text" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Data Structures" />
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">Course Code</label>
-                      <input required type="text" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="CS-301" />
+                      <input required type="text" value={formData.code} onChange={e => setFormData({...formData, code: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="CS-301" />
                     </div>
                   </div>
                   
                   <div className="flex flex-col gap-1">
                     <label className="font-label-sm text-label-sm text-on-surface-variant">Description</label>
-                    <input type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Brief topic description..." />
+                    <input type="text" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Brief topic description..." />
                   </div>
 
                   <div className="grid grid-cols-3 gap-4">
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">Type</label>
-                      <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm">
+                      <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm">
                         <option value="Teori">Teori</option>
                         <option value="Praktik">Praktik</option>
                       </select>
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">Start Time</label>
-                      <input required type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" />
+                      <input required type="time" value={formData.startTime} onChange={e => setFormData({...formData, startTime: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" />
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">End Time</label>
-                      <input required type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" />
+                      <input required type="time" value={formData.endTime} onChange={e => setFormData({...formData, endTime: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">Location</label>
-                      <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Room 402" />
+                      <input required type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Room 402" />
                     </div>
                     <div className="flex flex-col gap-1">
                       <label className="font-label-sm text-label-sm text-on-surface-variant">Lecturer</label>
-                      <input required type="text" value={formData.lecturer} onChange={e => setFormData({...formData, lecturer: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Dr. Alan Turing" />
+                      <input required type="text" value={formData.lecturer} onChange={e => setFormData({...formData, lecturer: e.target.value})} className="px-3 py-2 rounded-lg border border-outline-variant bg-surface text-on-surface focus:ring-1 focus:ring-secondary outline-none text-sm" placeholder="Dr. Alan Turing" />
                     </div>
                   </div>
                 </form>
